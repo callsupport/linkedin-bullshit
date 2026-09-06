@@ -53,7 +53,7 @@ if st.button("Traduire"):
             
             try:
                 # Création du modèle standard
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                model = genai.GenerativeModel("gemini-pro")
                 
                 # Génération du post avec le Méga-Prompt
                 reponse = model.generate_content(prompt_complet)
