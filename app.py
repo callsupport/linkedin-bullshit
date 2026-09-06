@@ -24,34 +24,21 @@ persona_choisi = st.selectbox(
 # 5. Zone de texte utilisateur
 texte_original = st.text_area("Votre texte normal :", placeholder="Ex: J'ai mangé une pomme ce midi.")
 
-# 6. Bouton d'action (Renommé "Traduire")
+# 6. Bouton d'action
 if st.button("Traduire"):
     if texte_original:
         with st.spinner("Génération du post en cours... 🧠"):
             
             # Définition du comportement de l'IA selon le persona
             if "Lucas" in persona_choisi:
-                style_persona = """
-                Tu es Lucas, un jeune étudiant/diplômé. Tu veux prouver ta maturité. 
-                Vocabulaire à utiliser : challenge, opportunité, humilité, hâte d'apprendre, reconnaissant. 
-                Ton style : Tu transformes le moindre petit événement en une leçon de vie sur ta résilience.
-                """
+                style_persona = "Tu es Lucas, un jeune étudiant/diplômé. Tu veux prouver ta maturité. Vocabulaire à utiliser : challenge, opportunité, humilité, hâte d'apprendre, reconnaissant. Ton style : Tu transformes le moindre petit événement en une leçon de vie sur ta résilience."
             elif "Sophie" in persona_choisi:
-                style_persona = """
-                Tu es Sophie, une manager agile, RH ou Scrum Master. Tu adores le télétravail et la santé mentale au travail. 
-                Vocabulaire à utiliser : synergie, alignement, feedback, bienveillance, sortir de sa zone de confort. 
-                Ton style : Très empathique, tu transformes tout en un moment de co-construction stratégique.
-                """
+                style_persona = "Tu es Sophie, une manager agile, RH ou Scrum Master. Tu adores le télétravail et la santé mentale au travail. Vocabulaire à utiliser : synergie, alignement, feedback, bienveillance, sortir de sa zone de confort. Ton style : Très empathique, tu transformes tout en un moment de co-construction stratégique."
             else:
-                style_persona = """
-                Tu es Jean-Disrupteur, un CEO insupportable de la Start-up Nation. Tu te lèves à 4h du matin. 
-                Vocabulaire à utiliser : mindset, game changer, scale, hustle, ROI, pivoter, out of the box. 
-                Ton style : Arrogant mais se voulant inspirant, tu sur-dramatises tout avec du franglais ridicule.
-                """
+                style_persona = "Tu es Jean-Disrupteur, un CEO insupportable de la Start-up Nation. Tu te lèves à 4h du matin. Vocabulaire à utiliser : mindset, game changer, scale, hustle, ROI, pivoter, out of the box. Ton style : Arrogant mais se voulant inspirant, tu sur-dramatises tout avec du franglais ridicule."
 
-            # Instructions globales pour le formatage LinkedIn
-            system_prompt = f"""
-            Tu es un générateur de posts LinkedIn (broetry). 
+            # LA SOLUTION : Le Méga-Prompt qui fusionne tout
+            prompt_complet = f"""
             {style_persona}
             
             Règles de formatage STRICTES :
@@ -59,17 +46,17 @@ if st.button("Traduire"):
             2. Fais un saut de ligne entre CHAQUE phrase (une phrase = un paragraphe). C'est obligatoire.
             3. Ajoute au moins 4 emojis pertinents.
             4. Termine toujours par une question ouverte pour générer des commentaires.
+            
+            Voici le texte normal à transformer en post LinkedIn : 
+            "{texte_original}"
             """
             
             try:
-                # Création du modèle avec les instructions
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash-latest",
-                    system_instruction=system_prompt
-                )
+                # Création du modèle standard
+                model = genai.GenerativeModel("gemini-1.5-flash")
                 
-                # Génération du post
-                reponse = model.generate_content(texte_original)
+                # Génération du post avec le Méga-Prompt
+                reponse = model.generate_content(prompt_complet)
                 
                 # Affichage du résultat
                 st.success("✅ Votre post est prêt !")
