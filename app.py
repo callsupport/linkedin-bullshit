@@ -1,69 +1,64 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Configuration de la page
+# 1. Configuration
 st.set_page_config(page_title="Le LinkedInator", page_icon="🚀", layout="centered")
-
-# 2. Récupération de la clé API depuis les secrets de Streamlit
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# 3. En-tête de l'application
-st.title("🚀 Le Traducteur LinkedIn (BullshItIn)")
-st.markdown("**Transformez une phrase banale en un post viral, selon le profil de votre choix.**")
+st.title("🚀 Le Traducteur LinkedIn")
+st.markdown("**Transformez une phrase banale en un post viral.**")
 
-# 4. Choix du Persona
+# 2. Interface
 persona_choisi = st.selectbox(
     "Qui voulez-vous incarner ?",
-    (
-        "🎓 Lucas (L'étudiant en quête de sens)", 
-        "🤝 Sophie (La manager bienveillante)", 
-        "💎 Jean-Disrupteur (Le CEO visionnaire)"
-    )
+    ("🎓 Lucas (L'étudiant en quête de sens)", "🤝 Sophie (La manager bienveillante)", "💎 Jean-Disrupteur (Le CEO visionnaire)")
 )
-
-# 5. Zone de texte utilisateur
 texte_original = st.text_area("Votre texte normal :", placeholder="Ex: J'ai mangé une pomme ce midi.")
 
-# 6. Bouton d'action
+# 3. Logique
 if st.button("Traduire"):
     if texte_original:
-        with st.spinner("Génération du post en cours... 🧠"):
-            
-            # Définition du comportement de l'IA selon le persona
-            if "Lucas" in persona_choisi:
-                style_persona = "Tu es Lucas, un jeune étudiant/diplômé. Tu veux prouver ta maturité. Vocabulaire à utiliser : challenge, opportunité, humilité, hâte d'apprendre, reconnaissant. Ton style : Tu transformes le moindre petit événement en une leçon de vie sur ta résilience."
-            elif "Sophie" in persona_choisi:
-                style_persona = "Tu es Sophie, une manager agile, RH ou Scrum Master. Tu adores le télétravail et la santé mentale au travail. Vocabulaire à utiliser : synergie, alignement, feedback, bienveillance, sortir de sa zone de confort. Ton style : Très empathique, tu transformes tout en un moment de co-construction stratégique."
-            else:
-                style_persona = "Tu es Jean-Disrupteur, un CEO insupportable de la Start-up Nation. Tu te lèves à 4h du matin. Vocabulaire à utiliser : mindset, game changer, scale, hustle, ROI, pivoter, out of the box. Ton style : Arrogant mais se voulant inspirant, tu sur-dramatises tout avec du franglais ridicule."
-
-            # LA SOLUTION : Le Méga-Prompt qui fusionne tout
-            prompt_complet = f"""
-            {style_persona}
-            
-            Règles de formatage STRICTES :
-            1. Commence par une phrase d'accroche très courte et dramatique.
-            2. Fais un saut de ligne entre CHAQUE phrase (une phrase = un paragraphe). C'est obligatoire.
-            3. Ajoute au moins 4 emojis pertinents.
-            4. Termine toujours par une question ouverte pour générer des commentaires.
-            
-            Voici le texte normal à transformer en post LinkedIn : 
-            "{texte_original}"
-            """
-            
+        with st.spinner("Recherche d'un modèle IA disponible... 🧠"):
             try:
-                # Création du modèle standard
-                model = genai.GenerativeModel("gemini-pro")
+                # ASTUCE ULTIME : On demande à Google quel modèle tu as le droit d'utiliser
+                modele_autorise = None
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        modele_autorise = m.name
+                        break
                 
-                # Génération du post avec le Méga-Prompt
-                reponse = model.generate_content(prompt_complet)
-                
-                # Affichage du résultat
-                st.success("✅ Votre post est prêt !")
-                st.code(reponse.text, language="markdown")
-                st.balloons()
-                
+                # Si Google bloque tout (Restriction Europe / France)
+                if not modele_autorise:
+                    st.error("🚨 Google bloque l'accès aux modèles pour votre clé API (restriction géographique européenne fréquente sur les comptes gratuits).")
+                else:
+                    # Préparation du style
+                    if "Lucas" in persona_choisi:
+                        style = "Tu es Lucas, un étudiant qui surjoue la maturité. Utilise : challenge, opportunité, humilité."
+                    elif "Sophie" in persona_choisi:
+                        style = "Tu es Sophie, manager bienveillante. Utilise : synergie, alignement, sortir de sa zone de confort."
+                    else:
+                        style = "Tu es Jean-Disrupteur, CEO insupportable. Utilise : mindset, ROI, pivoter, out of the box."
+
+                    prompt_complet = f"""
+                    {style}
+                    Règles STRICTES:
+                    1. Phrase d'accroche courte.
+                    2. Un saut de ligne entre chaque phrase (obligatoire).
+                    3. 4 emojis minimum.
+                    4. Finit par une question ouverte.
+                    
+                    Texte à transformer : "{texte_original}"
+                    """
+                    
+                    # Génération avec le modèle trouvé
+                    model = genai.GenerativeModel(modele_autorise)
+                    reponse = model.generate_content(prompt_complet)
+                    
+                    st.success(f"✅ Succès ! (Généré avec {modele_autorise})")
+                    st.code(reponse.text, language="markdown")
+                    st.balloons()
+                    
             except Exception as e:
-                st.error(f"Une erreur est survenue : {e}")
+                st.error(f"Une erreur persistante est survenue : {e}")
     else:
-        st.warning("⚠️ Veuillez entrer un texte avant de cliquer sur Traduire.")
+        st.warning("⚠️ Veuillez entrer un texte.")
