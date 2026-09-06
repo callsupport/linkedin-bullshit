@@ -1,6 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
-import time  # 👈 On ajoute l'outil pour gérer le temps
+import time
 
 # 1. Configuration
 st.set_page_config(page_title="Le LinkedInator", page_icon="🚀", layout="centered")
@@ -40,28 +40,27 @@ if st.button("Traduire"):
             Texte à transformer : "{texte_original}"
             """
             
-            # 🚀 SYSTÈME ANTI-QUOTA : On tente 3 fois maximum
+            # 🚀 SYSTÈME ANTI-QUOTA
             max_tentatives = 3
             for tentative in range(max_tentatives):
                 try:
-                    # Utilisation du modèle standard le plus rapide
-                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    # LE BON MODÈLE EST ICI
+                    model = genai.GenerativeModel("gemini-3.6-flash")
                     reponse = model.generate_content(prompt_complet)
                     
                     st.success("✅ Succès ! Votre post est prêt.")
                     st.code(reponse.text, language="markdown")
                     st.balloons()
-                    break # Si ça marche, on sort de la boucle !
+                    break 
                     
                 except Exception as e:
                     erreur = str(e)
-                    # Si c'est une erreur de quota (429)
                     if "429" in erreur or "Quota" in erreur:
                         if tentative < max_tentatives - 1:
                             st.warning(f"⏳ Google est un peu surchargé. Nouvelle tentative automatique dans 15 secondes... (Essai {tentative + 1}/{max_tentatives})")
-                            time.sleep(15) # On met le code en pause pendant 15 secondes
+                            time.sleep(15)
                         else:
-                            st.error("🚨 Le quota est toujours bloqué après plusieurs tentatives. Revenez dans quelques minutes.")
+                            st.error("🚨 Le quota est bloqué. Revenez dans quelques minutes.")
                     else:
                         st.error(f"Une autre erreur est survenue : {e}")
                         break
